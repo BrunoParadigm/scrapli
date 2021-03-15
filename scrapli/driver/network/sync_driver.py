@@ -245,7 +245,7 @@ class NetworkDriver(GenericDriver, BaseNetworkDriver):
             if command in enter_config_mode_command:
                 config_mode = True
                 continue
-            elif command in exit_config_mode_command or last_iteration and config_commands:
+            elif command in exit_config_mode_command or last_iteration and config_mode:
                 if last_iteration:
                     config_commands.append(command)
                 response = self.send_configs(
@@ -258,7 +258,7 @@ class NetworkDriver(GenericDriver, BaseNetworkDriver):
                         timeout_ops=timeout_ops,)
 
                 config_mode = False
-                confg_commands = []
+
             else:
                 if config_mode:
                     config_commands.append(command)
