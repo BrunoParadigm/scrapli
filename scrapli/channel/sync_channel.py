@@ -133,8 +133,7 @@ class Channel(BaseChannel):
                 pattern=search_pattern,
                 string=buf,
             )
-            print(buf)
-            print(channel_match)
+
             if channel_match:
                 return buf
 
@@ -592,7 +591,7 @@ class Channel(BaseChannel):
                     buf += self._read_until_input(channel_input=bytes_channel_input)
                     self.send_return()
 
-                print(channel_response)
+
                 buf += self._read_until_prompt(prompt=channel_response)
 
         processed_buf += self._process_output(
