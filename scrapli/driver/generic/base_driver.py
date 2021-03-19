@@ -9,7 +9,7 @@ from scrapli.response import MultiResponse, Response
 class BaseGenericDriver:
     @staticmethod
     def _pre_send_command(
-        host: str, command: str, failed_when_contains: Optional[Union[str, List[str]]] = None
+        host: str, command: str, failed_when_contains: Optional[Union[str, List[str]]] = None,initial_prompt:str =""
     ) -> Response:
         """
         Handle pre "send_command" tasks for consistency between sync/async versions
@@ -18,6 +18,7 @@ class BaseGenericDriver:
             host: string name of the host
             command: string to send to device in privilege exec mode
             failed_when_contains: string or list of strings indicating failure if found in response
+            initial_prompt: The initial prompt before the command was sent.
 
         Returns:
             Response: Scrapli Response object
@@ -34,6 +35,7 @@ class BaseGenericDriver:
 
         response = Response(
             host=host,
+            initial_prompt=initial_prompt,
             channel_input=command,
             failed_when_contains=failed_when_contains,
         )
@@ -42,7 +44,7 @@ class BaseGenericDriver:
 
     @staticmethod
     def _post_send_command(
-        raw_response: bytes, processed_response: bytes, response: Response
+        raw_response: bytes, processed_response: bytes, response: Response,response_prompt:str = ""
     ) -> Response:
         """
         Handle post "send_command" tasks for consistency between sync/async versions
@@ -51,6 +53,7 @@ class BaseGenericDriver:
             raw_response: raw response returned from the channel
             processed_response: processed response returned from the channel
             response: response object to update with channel results
+            response_prompt: The prompt after the command was sent
 
         Returns:
             Response: Scrapli Response object
@@ -61,6 +64,8 @@ class BaseGenericDriver:
         """
         response.record_response(result=processed_response)
         response.raw_result = raw_response
+        response.response_prompt = response_prompt
+        response.prompt_change = response.initial_prompt != response.response_prompt
         return response
 
     @staticmethod
@@ -119,6 +124,7 @@ class BaseGenericDriver:
         host: str,
         interact_events: List[Tuple[str, str, Optional[bool]]],
         failed_when_contains: Optional[Union[str, List[str]]] = None,
+        initial_prompt:str =""
     ) -> Response:
         """
         Handle pre "send_interactive" tasks for consistency between sync/async versions
@@ -131,6 +137,7 @@ class BaseGenericDriver:
                 input that is sent to the device is "hidden" (ex: password), if the hidden param is
                 not provided it is assumed the input is "normal" (not hidden)
             failed_when_contains: string or list of strings indicating failure if found in response
+            initial_prompt: The initial prompt before the interactive events were sent
 
         Returns:
             Response: Scrapli Response object
@@ -141,5 +148,5 @@ class BaseGenericDriver:
         """
         joined_input = ", ".join([event[0] for event in interact_events])
         return cls._pre_send_command(
-            host=host, command=joined_input, failed_when_contains=failed_when_contains
+            host=host, command=joined_input, failed_when_contains=failed_when_contains,initial_prompt=initial_prompt
         )

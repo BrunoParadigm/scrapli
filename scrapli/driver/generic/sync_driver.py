@@ -127,12 +127,14 @@ class GenericDriver(Driver, BaseGenericDriver):
             host=self._base_transport_args.host,
             command=command,
             failed_when_contains=failed_when_contains,
+            initial_prompt=self.get_prompt(),
+
         )
         raw_response, processed_response = self.channel.send_input(
             channel_input=command, strip_prompt=strip_prompt, eager=eager
         )
         return self._post_send_command(
-            raw_response=raw_response, processed_response=processed_response, response=response
+            raw_response=raw_response, processed_response=processed_response, response=response,response_prompt=self.get_prompt()
         )
 
     def send_command(
@@ -325,15 +327,18 @@ class GenericDriver(Driver, BaseGenericDriver):
             host=self._base_transport_args.host,
             command=channel_input,
             failed_when_contains=failed_when_contains,
+            initial_prompt=self.get_prompt()
         )
+
         raw_response, processed_response = self.channel.send_input_and_read(
             channel_input=channel_input,
             strip_prompt=strip_prompt,
             expected_outputs=expected_outputs,
             read_duration=read_duration,
         )
+
         return self._post_send_command(
-            raw_response=raw_response, processed_response=processed_response, response=response
+            raw_response=raw_response, processed_response=processed_response, response=response,response_prompt=self.get_prompt()
         )
 
     @TimeoutOpsModifier()
@@ -424,10 +429,13 @@ class GenericDriver(Driver, BaseGenericDriver):
             host=self._base_transport_args.host,
             interact_events=interact_events,
             failed_when_contains=failed_when_contains,
+            initial_prompt=self.get_prompt()
         )
+
         raw_response, processed_response = self.channel.send_inputs_interact(
             interact_events=interact_events
         )
+
         return self._post_send_command(
-            raw_response=raw_response, processed_response=processed_response, response=response
-        )
+                raw_response=raw_response, processed_response=processed_response, response=response,response_prompt=self.get_prompt()
+            )
