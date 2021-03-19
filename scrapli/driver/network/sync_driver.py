@@ -206,7 +206,7 @@ class NetworkDriver(GenericDriver, BaseNetworkDriver):
 
         return response
 
-    def send_cmds(self, commands,):
+    def send_any_commands(self, commands,):
         expected_outputs = []
         interact_events = []
         expected_outputs.append(self.get_prompt())
@@ -245,78 +245,6 @@ class NetworkDriver(GenericDriver, BaseNetworkDriver):
 
         return responses
 
-    def send_any_commands(
-            self,
-            commands:List[Union[str, Tuple[str, str, Optional[bool]]]],
-            *,
-            stop_on_failed: bool = False,
-            interactive_privilege: str = "",
-            **kwargs,
-
-    ) -> MultiResponse:
-        responses = MultiResponse()
-
-        interact_events = []
-        config_commands = []
-        config_mode = False
-
-        config_privilege_level = kwargs.get("configuration","configuration")
-
-        # get the config privilege level
-        config_privilege = self.privilege_levels.get(config_privilege_level) or None
-
-        enter_config_mode_command = ""
-        exit_config_mode_command = ""
-
-        if config_privilege:
-            enter_config_mode_command = config_privilege.escalate
-            exit_config_mode_command = config_privilege.deescalate
-
-        if isinstance(commands, str) or isinstance(commands,Tuple):
-            commands = [commands]
-
-        for index, command in enumerate(commands):
-            last_iteration = index == len(commands) - 1
-
-            # if command is a tuple, it is an interarcitve command
-            if isinstance(command, Tuple):
-                interact_events.append(command)
-                if last_iteration or not isinstance(commands[index + 1 ],Tuple):
-                    response = self.send_interactive(
-                            interact_events=interact_events,
-                            privilege_level=interactive_privilege,
-                           )
-                    responses.append(response)
-
-                continue
-
-            # Check if the command is an enter config mode command
-            if enter_config_mode_command in command:
-                config_mode = True
-                continue
-            # check if command is exit config mode command or last iteration
-            elif exit_config_mode_command in command or \
-                    last_iteration and config_mode:
-                if last_iteration:
-                    config_commands.append(command)
-
-                response = self.send_configs(
-                        configs=config_commands,
-                        stop_on_failed=stop_on_failed,
-                        privilege_level=interactive_privilege)
-
-                config_mode = False
-                config_commands = []
-
-            else:
-                if config_mode:
-                    config_commands.append(command)
-                    continue
-                response = self.send_commands(commands=[command], stop_on_failed=stop_on_failed,)
-
-            responses.append(response)
-
-        return responses
 
     def send_commands(
         self,
