@@ -13,6 +13,7 @@ class Response:
         self,
         host: str,
         channel_input: str,
+        initial_prompt: str,
         textfsm_platform: str = "",
         genie_platform: str = "",
         failed_when_contains: Optional[Union[str, List[str]]] = None,
@@ -25,6 +26,7 @@ class Response:
 
         Args:
             host: host that was operated on
+            initial_prompt: shows the initial prompt before the input was sent
             channel_input: input that got sent down the channel
             textfsm_platform: ntc-templates friendly platform type
             genie_platform: cisco pyats/genie friendly platform type
@@ -39,6 +41,9 @@ class Response:
 
         """
         self.host = host
+        self.initial_prompt = initial_prompt
+        self.response_prompt: Optional[str] = None
+        self.prompt_change: bool = False
         self.start_time = datetime.now()
         self.finish_time: Optional[datetime] = None
         self.elapsed_time: Optional[float] = None
@@ -101,6 +106,36 @@ class Response:
 
         """
         return f"Response <Success: {str(not self.failed)}>"
+
+    def console_output(self) -> str:
+        """Display's what the console output would have looked like.
+
+        An exmaple of console output would be:
+
+        '''
+        cisco-ios-device# show run | inc booted
+        boot system switch all flash:cat9k_iosxe.16.10.01.SPA.conf
+        license boot level network-advantage addon dna-advantage
+        '''
+
+        diagnostic bootup level minimal
+        Args:
+            N/A
+
+        Returns:
+            string of what the original prompt, input, and outputu would have
+            looked like in the console.
+
+        Raises:
+            N/A
+
+        """
+        console_output = f"{self.initial_prompt}{self.channel_input}\n"
+
+        if self.result:
+            console_output += f"{self.result}\n"
+
+        return console_output
 
     def record_response(self, result: bytes) -> None:
         """
@@ -293,6 +328,29 @@ class MultiResponse(ScrapliMultiResponse):
         result = ""
         for response in self.data:
             result += "\n".join([response.channel_input, response.result])
+        return result
+
+    @property
+    def console_output(self) -> str:
+        """
+        Build a unified console output from all elements of MultiResponse
+
+        This is used to display what the original input and output would have
+        looked like in the console cli.
+
+        Args:
+            N/A
+
+        Returns:
+            str: Unified result by combining results of all elements of MultiResponse
+
+        Raises:
+            N/A
+        """
+        result = ""
+
+        for response in self.data:
+            result += "\n".join([response.console_output()])
         return result
 
     def raise_for_status(self) -> None:

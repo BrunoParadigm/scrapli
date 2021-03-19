@@ -129,12 +129,12 @@ class Channel(BaseChannel):
 
         while True:
             buf += self.read()
-
             channel_match = re.search(
                 pattern=search_pattern,
                 string=buf,
             )
-
+            print(buf)
+            print(channel_match)
             if channel_match:
                 return buf
 
@@ -492,7 +492,6 @@ class Channel(BaseChannel):
             buf += self._read_until_prompt_or_time(
                 channel_outputs=bytes_channel_outputs, read_duration=read_duration
             )
-
         processed_buf = self._process_output(
             buf=buf,
             strip_prompt=strip_prompt,
@@ -592,6 +591,8 @@ class Channel(BaseChannel):
                 else:
                     buf += self._read_until_input(channel_input=bytes_channel_input)
                     self.send_return()
+
+                print(channel_response)
                 buf += self._read_until_prompt(prompt=channel_response)
 
         processed_buf += self._process_output(
