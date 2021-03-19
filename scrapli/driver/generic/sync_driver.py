@@ -323,11 +323,12 @@ class GenericDriver(Driver, BaseGenericDriver):
             # should not happen! :)
             raise ScrapliValueError("driver _base_transport_args not set for some reason")
 
+        initial_prompt = self.get_prompt()
         response = self._pre_send_command(
             host=self._base_transport_args.host,
             command=channel_input,
             failed_when_contains=failed_when_contains,
-            initial_prompt=self.get_prompt()
+            initial_prompt= initial_prompt
         )
 
         raw_response, processed_response = self.channel.send_input_and_read(
@@ -336,9 +337,9 @@ class GenericDriver(Driver, BaseGenericDriver):
             expected_outputs=expected_outputs,
             read_duration=read_duration,
         )
-
+        response_prompt = self.get_prompt()
         return self._post_send_command(
-            raw_response=raw_response, processed_response=processed_response, response=response,response_prompt=self.get_prompt()
+            raw_response=raw_response, processed_response=processed_response, response=response,response_prompt=response_prompt
         )
 
     @TimeoutOpsModifier()

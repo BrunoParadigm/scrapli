@@ -206,11 +206,51 @@ class NetworkDriver(GenericDriver, BaseNetworkDriver):
 
         return response
 
+    def send_cmds(self, commands,):
+        expected_outputs = []
+        interact_events = []
+        expected_outputs.append(self.get_prompt())
+
+        responses = MultiResponse()
+
+        for index,command in enumerate(commands):
+            last_iteration = index == len(commands) - 1
+
+            # if command is a tuple, it is an interarcitve command
+            if isinstance(command, Tuple):
+                interact_events.append(command)
+
+                if last_iteration or not isinstance(commands[index + 1 ],Tuple):
+                    response = self.send_interactive(
+                            interact_events=interact_events,
+                            privilege_level=self._current_priv_level.name
+                    )
+                    responses.append(response)
+
+                continue
+
+            response = self.send_and_read(channel_input=command, expected_outputs=expected_outputs,failed_when_contains=self.failed_when_contains)
+            responses.append(response)
+            response_prompt = response.response_prompt
+
+            if response.prompt_change and response.response_prompt:
+                current_privledges = self._determine_current_priv(response.response_prompt)
+                if current_privledges:
+                    target_priv = current_privledges.pop(0)
+                    current_priv_level = self.privilege_levels.get(target_priv)
+                    self._current_priv_level = current_priv_level
+
+                if response_prompt not in expected_outputs:
+                        expected_outputs.append(response_prompt)
+
+        return responses
+
     def send_any_commands(
             self,
-            commands:List[Union[str,Tuple[str, str, Optional[bool]]]],
+            commands:List[Union[str, Tuple[str, str, Optional[bool]]]],
             *,
             stop_on_failed: bool = False,
+            interactive_privilege: str = "",
             **kwargs,
 
     ) -> MultiResponse:
@@ -244,24 +284,26 @@ class NetworkDriver(GenericDriver, BaseNetworkDriver):
                 if last_iteration or not isinstance(commands[index + 1 ],Tuple):
                     response = self.send_interactive(
                             interact_events=interact_events,
-                            **kwargs)
+                            privilege_level=interactive_privilege,
+                           )
                     responses.append(response)
 
                 continue
 
             # Check if the command is an enter config mode command
-            if command in enter_config_mode_command:
+            if enter_config_mode_command in command:
                 config_mode = True
                 continue
             # check if command is exit config mode command or last iteration
-            elif command in exit_config_mode_command or last_iteration and config_mode:
+            elif exit_config_mode_command in command or \
+                    last_iteration and config_mode:
                 if last_iteration:
                     config_commands.append(command)
 
                 response = self.send_configs(
                         configs=config_commands,
                         stop_on_failed=stop_on_failed,
-                        **kwargs)
+                        privilege_level=interactive_privilege)
 
                 config_mode = False
                 config_commands = []
@@ -270,7 +312,7 @@ class NetworkDriver(GenericDriver, BaseNetworkDriver):
                 if config_mode:
                     config_commands.append(command)
                     continue
-                response = self.send_commands(commands=[command], stop_on_failed=stop_on_failed, **kwargs)
+                response = self.send_commands(commands=[command], stop_on_failed=stop_on_failed,)
 
             responses.append(response)
 
