@@ -206,46 +206,6 @@ class NetworkDriver(GenericDriver, BaseNetworkDriver):
 
         return response
 
-    def send_any_commands(self, commands,):
-        expected_outputs = []
-        interact_events = []
-        expected_outputs.append(self.get_prompt())
-
-        responses = MultiResponse()
-
-        for index,command in enumerate(commands):
-            last_iteration = index == len(commands) - 1
-
-            # if command is a tuple, it is an interarcitve command
-            if isinstance(command, Tuple):
-                interact_events.append(command)
-
-                if last_iteration or not isinstance(commands[index + 1 ],Tuple):
-                    response = self.send_interactive(
-                            interact_events=interact_events,
-                            privilege_level=self._current_priv_level.name
-                    )
-                    responses.append(response)
-
-                continue
-
-            response = self.send_and_read(channel_input=command, expected_outputs=expected_outputs,failed_when_contains=self.failed_when_contains)
-            responses.append(response)
-            response_prompt = response.response_prompt
-
-            if response.prompt_change and response.response_prompt:
-                current_privledges = self._determine_current_priv(response.response_prompt)
-                if current_privledges:
-                    target_priv = current_privledges.pop(0)
-                    current_priv_level = self.privilege_levels.get(target_priv)
-                    self._current_priv_level = current_priv_level
-
-                if response_prompt not in expected_outputs:
-                        expected_outputs.append(response_prompt)
-
-        return responses
-
-
     def send_commands(
         self,
         commands: List[str],
