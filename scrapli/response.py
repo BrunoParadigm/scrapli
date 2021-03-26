@@ -2,21 +2,33 @@
 from collections import UserList
 from datetime import datetime
 from io import TextIOWrapper
-from typing import TYPE_CHECKING, Any, Dict, List, Optional, Union
+from typing import (
+    Any,
+    Dict,
+    List,
+    Optional,
+    TYPE_CHECKING,
+    Union,
+)
 
 from scrapli.exceptions import ScrapliCommandFailure
-from scrapli.helper import _textfsm_get_template, genie_parse, textfsm_parse, ttp_parse
+from scrapli.helper import (
+    _textfsm_get_template,
+    genie_parse,
+    textfsm_parse,
+    ttp_parse,
+)
 
 
 class Response:
     def __init__(
-        self,
-        host: str,
-        channel_input: str,
-        initial_prompt: str,
-        textfsm_platform: str = "",
-        genie_platform: str = "",
-        failed_when_contains: Optional[Union[str, List[str]]] = None,
+            self,
+            host: str,
+            channel_input: str,
+            initial_prompt: str,
+            textfsm_platform: str = "",
+            genie_platform: str = "",
+            failed_when_contains: Optional[Union[str, List[str]]] = None,
     ):
         """
         Scrapli Response
@@ -152,7 +164,8 @@ class Response:
 
         """
         self.finish_time = datetime.now()
-        self.elapsed_time = (self.finish_time - self.start_time).total_seconds()
+        self.elapsed_time = (
+                self.finish_time - self.start_time).total_seconds()
         self.raw_result = result
         self.result = result.decode()
         if not self.failed_when_contains:
@@ -160,7 +173,8 @@ class Response:
         elif not any(err in self.result for err in self.failed_when_contains):
             self.failed = False
 
-    def textfsm_parse_output(self, to_dict: bool = True) -> Union[Dict[str, Any], List[Any]]:
+    def textfsm_parse_output(self, to_dict: bool = True) -> Union[
+        Dict[str, Any], List[Any]]:
         """
         Parse results with textfsm, always return structured data
 
@@ -177,10 +191,12 @@ class Response:
             N/A
 
         """
-        template = _textfsm_get_template(platform=self.textfsm_platform, command=self.channel_input)
+        template = _textfsm_get_template(platform=self.textfsm_platform,
+                                         command=self.channel_input)
         if isinstance(template, TextIOWrapper):
             structured_result = (
-                textfsm_parse(template=template, output=self.result, to_dict=to_dict) or []
+                    textfsm_parse(template=template, output=self.result,
+                                  to_dict=to_dict) or []
             )
         else:
             structured_result = []
@@ -203,12 +219,13 @@ class Response:
 
         """
         structured_result = genie_parse(
-            platform=self.genie_platform, command=self.channel_input, output=self.result
+                platform=self.genie_platform, command=self.channel_input,
+                output=self.result
         )
         return structured_result
 
     def ttp_parse_output(
-        self, template: Union[str, TextIOWrapper]
+            self, template: Union[str, TextIOWrapper]
     ) -> Union[Dict[str, Any], List[Any]]:
         """
         Parse results with ttp, always return structured data
@@ -225,7 +242,8 @@ class Response:
             N/A
 
         """
-        structured_result = ttp_parse(template=template, output=self.result) or []
+        structured_result = ttp_parse(template=template,
+                                      output=self.result) or []
         return structured_result
 
     def raise_for_status(self) -> None:
@@ -247,7 +265,8 @@ class Response:
 
 
 if TYPE_CHECKING:
-    ScrapliMultiResponse = UserList[Response]  # pylint:  disable=E1136; # pragma:  no cover
+    ScrapliMultiResponse = UserList[
+        Response]  # pylint:  disable=E1136; # pragma:  no cover
 else:
     ScrapliMultiResponse = UserList
 
