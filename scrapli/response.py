@@ -264,9 +264,66 @@ class Response:
             raise ScrapliCommandFailure()
 
 
+class ConfigResponse(Response):
+    """Response from a configuration command"""
+
+    def __repr__(self) -> str:
+        """
+        Magic repr method for Response class
+
+        Args:
+            N/A
+
+        Returns:
+            str: repr for class object
+
+        Raises:
+            N/A
+
+        """
+        return f"ConfigCommandResponse <Success: {str(not self.failed)}>"
+
+    def __str__(self) -> str:
+        """
+        Magic str method for Response class
+
+        Args:
+            N/A
+
+        Returns:
+            str: str for class object
+
+        Raises:
+            N/A
+
+        """
+        return f"ConfigCommandResponse <Success: {str(not self.failed)}>"
+
+    def console_output(self) -> str:
+        """Display's what the console output would have looked like for a
+        configuration command.
+
+        Args:
+            N/A
+
+        Returns:
+            string of what the original prompt, input, and output would have
+            looked like in the console.
+
+        Raises:
+            N/A
+
+        """
+        console_output = f"{self.initial_prompt}{self.channel_input}\n"
+        if self.result and self.response_prompt:
+            console_output += f"{self.result}\n"
+
+        return console_output
+
+
 if TYPE_CHECKING:
     ScrapliMultiResponse = UserList[
-        Response]  # pylint:  disable=E1136; # pragma:  no cover
+        Response, ConfigResponse]  # pylint:  disable=E1136; # pragma:  no cover
 else:
     ScrapliMultiResponse = UserList
 
