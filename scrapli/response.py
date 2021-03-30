@@ -368,11 +368,13 @@ class MultiResponse(ScrapliMultiResponse):
         )
 
     @property
-    def host(self)->str:
+    def host(self) -> str:
         host = ""
-        first_response = self.data.get(0)
-        if first_response:
+        try:
+            first_response = self.data[0]
             host = first_response.host
+        except IndexError:
+            pass
 
         return host
 
