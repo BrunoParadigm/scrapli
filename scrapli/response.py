@@ -368,6 +368,15 @@ class MultiResponse(ScrapliMultiResponse):
         )
 
     @property
+    def host(self)->str:
+        host = ""
+        first_response = self.data.get(0)
+        if first_response:
+            host = first_response.host
+
+        return host
+
+    @property
     def failed(self) -> bool:
         """
         Determine if any elements of MultiResponse are failed
