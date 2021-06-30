@@ -1,9 +1,7 @@
 import sys
-from unittest.mock import patch
 
 import pytest
 
-from scrapli.driver.network import AsyncNetworkDriver
 from scrapli.exceptions import ScrapliPrivilegeError
 
 
